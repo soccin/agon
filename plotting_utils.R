@@ -19,10 +19,10 @@ library(tidyverse)
 #' @param alpha Point transparency (default 0.2)
 #' @return ggplot object
 #' @export
-plot_cells_basic <- function(data, x_col = "Xc", y_col = "Yc", alpha = 0.2) {
+plot_cells_basic <- function(data, x_col = "Xc", y_col = "Yc", alpha = 0.25) {
   ggplot(data, aes(.data[[x_col]], .data[[y_col]])) + 
     geom_point(alpha = alpha) + 
-    theme_light() + 
+    theme_minimal() +
     coord_fixed()  # Equal aspect ratio for spatial data
 }
 
@@ -37,9 +37,10 @@ plot_rectangles <- function(rect_data, xlim = NULL, ylim = NULL) {
   p <- ggplot() + 
     theme_minimal() + 
     geom_rect(data = rect_data, 
-              aes(xmin = XMin, xmax = XMax, ymin = YMin, ymax = YMax),
-              fill = NA, color = "black") +  # Hollow rectangles
-    coord_fixed()
+              aes(xmin = XMin, xmax = XMax, ymin = YMin, ymax = YMax, color=!Exclude),
+              fill = NA) +  # Hollow rectangles
+    coord_fixed() +
+    ggsci::scale_color_uchicago()
   
   # Apply zoom limits if provided
   if (!is.null(xlim) && !is.null(ylim)) {
@@ -66,15 +67,17 @@ plot_cells_and_rectangles <- function(rect_data, cell_data,
     theme_minimal() + 
     # Draw rectangles first (background)
     geom_rect(data = rect_data, 
-              aes(xmin = XMin, xmax = XMax, ymin = YMin, ymax = YMax),
-              fill = NA, color = "black") +
+              aes(xmin = XMin, xmax = XMax, ymin = YMin, ymax = YMax, color=!Exclude),
+              fill = NA) +
+    ggsci::scale_color_uchicago() +
     # Add cell points on top
-    geom_point(data = cell_data, aes(.data[[x_col]], .data[[y_col]])) +
-    coord_fixed()
-  
+    geom_point(data = cell_data, aes(.data[[x_col]], .data[[y_col]]), fill="grey75")
+
   # Apply zoom if specified
   if (!is.null(xlim) && !is.null(ylim)) {
-    p <- p + coord_cartesian(xlim = xlim, ylim = ylim)
+    p <- p + coord_fixed(xlim = xlim, ylim = ylim)
+  } else {
+    p <- p + coord_fixed()
   }
   
   p
