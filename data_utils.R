@@ -31,7 +31,9 @@ read_cell_table <- function(sample_id) {
 clean_cell_data <- function(data) {
   data %>% 
     select(label:cell_size, area:ncol(data)) %>%  # Select core columns
-    select(-matches("_nuclear"))                   # Remove nuclear-specific columns
+    select(-matches("_nuclear")) %>%              # Remove nuclear-specific columns
+    rename(FOV=fov) %>%
+    mutate(FOV=as.numeric(gsub("^R","",FOV)))
 }
 
 # =============================================================================
