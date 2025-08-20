@@ -91,6 +91,45 @@ analyze_intersection_stats <- function(intersections) {
   )
 }
 
+#' Format intersection statistics as a presentation-ready table
+#' 
+#' Creates a nicely formatted tibble from intersection statistics
+#' that can be easily copied to PowerPoint or other presentations
+#' 
+#' @param stats Result from analyze_intersection_stats()
+#' @return Formatted tibble with both distributions
+#' @export
+format_stats_table <- function(stats) {
+  # Get the intersection counts (0, 1, 2, 3, etc.)
+  point_counts <- as.numeric(names(stats$points_distribution))
+  rect_counts <- as.numeric(names(stats$rectangles_distribution))
+  
+  # Create all possible counts from 0 to maximum
+  all_counts <- 0:max(c(point_counts, rect_counts))
+  
+  # Create formatted table
+  tibble(
+    `Intersection Count` = all_counts,
+    `Points (%)` = map_chr(all_counts, function(x) {
+      val <- stats$points_distribution[as.character(x)]
+      if (is.na(val)) "0.00" else sprintf("%.2f", val)
+    }),
+    `Rectangles (%)` = map_chr(all_counts, function(x) {
+      val <- stats$rectangles_distribution[as.character(x)]
+      if (is.na(val)) "0.00" else sprintf("%.2f", val)
+    })
+  ) %>%
+    # Add descriptive labels
+    mutate(
+      `Description` = case_when(
+        `Intersection Count` == 0 ~ "No overlap",
+        `Intersection Count` == 1 ~ "Single match", 
+        `Intersection Count` >= 2 ~ "Multiple matches"
+      )
+    ) %>%
+    select(`Intersection Count`, Description, `Points (%)`, `Rectangles (%)`)
+}
+
 #' Create bidirectional mapping between points and rectangles
 #' 
 #' @param intersections Result from find_intersections()
