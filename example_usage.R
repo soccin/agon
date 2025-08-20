@@ -66,6 +66,11 @@ cat("\nRectangles distribution (% of rectangles containing N points):\n")
 print(stats$rectangles_distribution)
 cat("\nOne-to-one matches found:", nrow(one_to_one), "\n\n")
 
+# Create presentation-ready table
+cat("=== PRESENTATION TABLE ===\n")
+presentation_table <- format_stats_table(stats)
+print(presentation_table)
+
 # =============================================================================
 # METHOD 2: All-in-one workflow function (simpler but less control)
 # =============================================================================
