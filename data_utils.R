@@ -60,5 +60,5 @@ load_halo_data <- function(sample_id) {
 #' @export
 extract_geom_data <- function(halo_data) {
   halo_data$geom.data %>% 
-    select(UUID, FOV, matches("^[XY]"))  # UUID, FOV, and X/Y coordinates
+    select(UUID, FOV, matches("^[XY]"),Exclude)  # UUID, FOV, and X/Y coordinates
 }
