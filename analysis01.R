@@ -8,22 +8,53 @@ require(patchwork)
 
 i=1
 sample_id=argv[i]
-dc0=read_cell_table(sample_id) %>% clean_cell_data
+dc0=load_cortana_data(sample_id) %>% filter(!Exclude)
 hh=load_halo_data(sample_id)
-dh0=extract_geom_data(hh)
+dh0=extract_geom_data(hh) %>% filter(!Exclude)
 
 
+#
+# Get list of common FOV's
+#
+
+fovs=intersect(
+  dc0 %>% distinct(FOV) %>% pull,
+  dh0 %>% distinct(FOV) %>% pull
+)
+
+mm=map2(
+  (dc0 %>% split(.$FOV))[fovs],
+  (dh0 %>% split(.$FOV))[fovs],
+  ~ list(Cortana=.x, Halo=.y)
+)
 
 
-ph=plot_rectangles(dh) + labs(subtitle="Halo",title=sample_id)
-pc=plot_cells_basic(dc) + labs(subtitle="Cortana",title=sample_id)
+ii=1
+mi=mm[[ii]]
+
+dc=mi$Cortana
+dh=mi$Halo
+
+if(dc$FOV[1]!=dh$FOV[1]) {
+  rlang::abort("FATAL ERROR::FOV Mismatch")
+}
+
+fov=dc$FOV[1]
+
+halt("DDDDD")
+
+ph=plot_rectangles(dh) + labs(subtitle="Halo",title=paste(sample_id,"FOV:",fov))
+pc=plot_cells_basic(dc) + labs(subtitle="Cortana",title=paste(sample_id,"FOV:",fov))
 
 p1=ph + pc
 
-s=1;
-p2=plot_cells_and_rectangles(dh,dc,xlim=s*16*c(-100,100)+3000,ylim=s*9*c(-100,100)+4000)
-s=.25;
-p3=plot_cells_and_rectangles(dh,dc,xlim=s*16*c(-100,100)+3000,ylim=s*9*c(-100,100)+4000)
+Xcm=dh %>% pull(X) %>% mean
+Ycm=dh %>% pull(Y) %>% mean
+
+s=.5;
+p2=plot_cells_and_rectangles(dh,dc,xlim=s*16*c(-100,100)+Xcm,ylim=s*9*c(-100,100)+Ycm)
+s=.2;
+p3=plot_cells_and_rectangles(dh,dc,xlim=s*16*c(-100,100)+Xcm,ylim=s*9*c(-100,100)+Ycm)
 
 # Step 2: Create spatial objects
 cat("Creating spatial objects...\n")
