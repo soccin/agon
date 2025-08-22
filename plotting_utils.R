@@ -23,6 +23,7 @@ plot_cells_basic <- function(data, x_col = "Xc", y_col = "Yc", alpha = 0.25) {
   ggplot(data, aes(.data[[x_col]], .data[[y_col]])) + 
     geom_point(alpha = alpha) + 
     theme_minimal() +
+    scale_y_reverse() +
     coord_fixed()  # Equal aspect ratio for spatial data
 }
 
@@ -40,6 +41,7 @@ plot_rectangles <- function(rect_data, xlim = NULL, ylim = NULL) {
               aes(xmin = XMin, xmax = XMax, ymin = YMin, ymax = YMax, color=!Exclude),
               fill = NA) +  # Hollow rectangles
     coord_fixed() +
+    scale_y_reverse() +
     ggsci::scale_color_uchicago()
   
   # Apply zoom limits if provided
@@ -80,5 +82,5 @@ plot_cells_and_rectangles <- function(rect_data, cell_data,
     p <- p + coord_fixed()
   }
   
-  p
+  p + scale_y_reverse()
 }
