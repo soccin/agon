@@ -5,7 +5,7 @@
 # CSV files and RDS files containing Halo geometry data
 # =============================================================================
 
-library(tidyverse)
+suppressPackageStartupMessages({library(tidyverse)})
 
 # =============================================================================
 # CSV DATA FUNCTIONS
@@ -17,8 +17,13 @@ library(tidyverse)
 #' @return Tibble with cell data
 #' @export
 read_cell_table <- function(sample_id) {
-  mesmer_folder="data/mpIF/GBM/10_samples/results/cell_table_with_exclusions"
-  read_csv(fs::dir_ls(mesmer_folder,regex=paste0("/",sample_id,"___cell.*csv.gz$")))
+  mesmer_folder="data/mpIF"
+  read_csv(fs::dir_ls(
+            mesmer_folder,
+            recur=T,
+            regex=paste0("/",sample_id,"___cell_table_size_normalized_final.csv")
+            )
+  )
 }
 
 #' Clean cell data by selecting relevant columns and removing nuclear markers
@@ -34,6 +39,18 @@ clean_cell_data <- function(data) {
     select(-matches("_nuclear")) %>%              # Remove nuclear-specific columns
     rename(FOV=fov) %>%
     mutate(FOV=as.numeric(gsub("^R","",FOV)))
+}
+
+#' Load and clean cell data in one step
+#' 
+#' Convenience function that reads cell table CSV file and applies cleaning 
+#' transformations. Combines read_cell_table() and clean_cell_data() operations.
+#' 
+#' @param sample_id Sample identifier (e.g., "GBM_043")
+#' @return Cleaned tibble with cell data
+#' @export
+load_cortana_data <- function(sample_id) {
+  read_cell_table(sample_id) |> clean_cell_data()
 }
 
 # =============================================================================
