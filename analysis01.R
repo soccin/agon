@@ -1,10 +1,10 @@
 argv=commandArgs(trailing=T)
 
-source("data_utils.R")
-source("plotting_utils.R")
-source("spatial_analysis.R")
+source("R/data_utils.R")
+source("R/plotting_utils.R")
+source("R/spatial_analysis.R")
 
-source("my_one_to_one_finder.R")
+source("R/my_one_to_one_finder.R")
 
 require(patchwork)
 

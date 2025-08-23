@@ -2,7 +2,7 @@
 # Unit Tests for Spatial Analysis Functions
 # =============================================================================
 # Test suite for spatial_analysis.R functions
-# Run with: source("test_spatial_analysis.R")
+# Run with: source("R/test_spatial_analysis.R")
 # =============================================================================
 
 library(tidyverse)
