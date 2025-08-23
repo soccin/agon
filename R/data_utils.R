@@ -22,12 +22,16 @@ suppressPackageStartupMessages({library(tidyverse)})
 #' @export
 read_cell_table <- function(sample_id) {
   mesmer_folder="data/mpIF"
-  read_csv(fs::dir_ls(
-            mesmer_folder,
-            recur=T,
-            regex=paste0("/",sample_id,"___cell_table_size_normalized_final.csv")
-            )
-  )
+  pattern <- paste0("/",sample_id,"___cell_table_size_normalized_final.csv")
+  matching_files <- fs::dir_ls(mesmer_folder, recur=T, regex=pattern)
+  
+  if (length(matching_files) == 0) {
+    stop("No cell table CSV file found for sample '", sample_id, "'. ",
+         "Expected pattern: *", sample_id, "___cell_table_size_normalized_final.csv ",
+         "in directory: ", mesmer_folder)
+  }
+  
+  read_csv(matching_files[1])
 }
 
 #' Clean cell data by selecting relevant columns and removing nuclear markers
@@ -93,10 +97,15 @@ load_cortana_data <- function(sample_id) {
 #' @return Loaded Halo data object from RDS file
 #' @export
 load_halo_data <- function(sample_id) {
-  rds_file <- fs::dir_ls("data/Halo",regex=paste0("/",sample_id,"___Halo.*rda"))
+  pattern <- paste0("/",sample_id,"___Halo.*rda")
+  rds_file <- fs::dir_ls("data/Halo", regex=pattern)
+  
   if (length(rds_file) == 0) {
-    stop("No RDS file found matching pattern: ", pattern)
+    stop("No Halo RDS file found for sample '", sample_id, "'. ",
+         "Expected pattern: *", sample_id, "___Halo*.rda ",
+         "in directory: data/Halo")
   }
+  
   readRDS(rds_file[1])  # Load first matching file
 }
 

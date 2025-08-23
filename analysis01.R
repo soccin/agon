@@ -10,9 +10,26 @@ require(patchwork)
 
 i=1
 sample_id=argv[i]
-dc0=load_cortana_data(sample_id) %>% filter(!Exclude)
-hh=load_halo_data(sample_id)
-dh0=extract_geom_data(hh) %>% filter(!Exclude)
+
+# Validate that sample_id was provided
+if (is.na(sample_id) || length(sample_id) == 0) {
+  cat("ERROR: No sample ID provided.\n")
+  cat("Usage: Rscript analysis01.R <sample_id>\n")
+  cat("Example: Rscript analysis01.R GBM_043\n")
+  quit(status = 1)
+}
+
+# Validate sample data exists before proceeding
+cat("Loading data for sample:", sample_id, "\n")
+tryCatch({
+  dc0=load_cortana_data(sample_id) %>% filter(!Exclude)
+  hh=load_halo_data(sample_id)
+  dh0=extract_geom_data(hh) %>% filter(!Exclude)
+}, error = function(e) {
+  cat("ERROR: Failed to load data for sample '", sample_id, "':\n", sep="")
+  cat(e$message, "\n")
+  quit(status = 1)
+})
 
 
 #
