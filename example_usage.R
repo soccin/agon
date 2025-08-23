@@ -6,9 +6,9 @@
 # =============================================================================
 
 # Load the modular analysis functions
-source("data_utils.R")      # Data loading and cleaning functions
-source("plotting_utils.R")  # Plotting and visualization functions  
-source("spatial_analysis.R") # Spatial analysis functions (loads the above two)
+source("R/data_utils.R")      # Data loading and cleaning functions
+source("R/plotting_utils.R")  # Plotting and visualization functions  
+source("R/spatial_analysis.R") # Spatial analysis functions (loads the above two)
 
 # =============================================================================
 # SETUP: Define file paths and patterns

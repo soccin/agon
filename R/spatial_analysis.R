@@ -9,8 +9,8 @@ library(tidyverse)
 library(sf)        # For spatial data operations
 
 # Load required utility modules
-source("data_utils.R")
-source("plotting_utils.R")
+source("R/data_utils.R")
+source("R/plotting_utils.R")
 
 # =============================================================================
 # SPATIAL OBJECT CREATION FUNCTIONS  
