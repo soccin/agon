@@ -8,6 +8,38 @@
 library(tidyverse)
 
 # =============================================================================
+# COMPARISON PLOTS
+# =============================================================================
+
+plot_comparisons <- function(dc,dh) {
+
+  sample_id=dc$sample_id[1]
+  fov=dc$FOV[1]
+
+  ph=plot_rectangles(dh) + labs(subtitle="Halo",title=paste(sample_id,"FOV:",fov))
+  pc=plot_cells_basic(dc) + labs(subtitle="Cortana",title=paste(sample_id,"FOV:",fov))
+
+  p1=ph + pc
+
+  Xcm=dh %>% pull(X) %>% mean
+  Ycm=dh %>% pull(Y) %>% mean
+
+  s=.5;
+  p2=plot_cells_and_rectangles(dh,dc,xlim=s*16*c(-100,100)+Xcm,ylim=s*9*c(-100,100)+Ycm)
+  s=.2;
+  p3=plot_cells_and_rectangles(dh,dc,xlim=s*16*c(-100,100)+Xcm,ylim=s*9*c(-100,100)+Ycm)
+
+  fs::dir_create("plots")
+
+  pdf(file=cc("plots/pltsHaloVsCortana",sample_id,fov,".pdf"),width=11,height=8.5)
+  print(ph+pc)
+  print(p2)
+  print(p3)
+  dev.off()
+
+}
+
+# =============================================================================
 # BASIC PLOTTING FUNCTIONS
 # =============================================================================
 
