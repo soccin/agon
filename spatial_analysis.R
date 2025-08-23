@@ -109,28 +109,29 @@ format_stats_table <- function(stats) {
   
   # Create formatted table
   tibble(
-    `Intersection Count` = all_counts,
-    `Points (%)` = map_chr(all_counts, function(x) {
+    intersection_count = all_counts,
+    pct_cortana = map_dbl(all_counts, function(x) {
       val <- stats$points_distribution[as.character(x)]
-      if (is.na(val)) "0.00" else sprintf("%.2f", val)
+      if (is.na(val)) 0.00 else val / 100
     }),
-    `Rectangles (%)` = map_chr(all_counts, function(x) {
+    pct_halo = map_dbl(all_counts, function(x) {
       val <- stats$rectangles_distribution[as.character(x)]
-      if (is.na(val)) "0.00" else sprintf("%.2f", val)
+      if (is.na(val)) 0.00 else val / 100
     })
   ) %>%
     # Add descriptive labels
     mutate(
-      `Description` = case_when(
-        `Intersection Count` == 0 ~ "No overlap",
-        `Intersection Count` == 1 ~ "Single match", 
-        `Intersection Count` >= 2 ~ "Multiple matches"
+      description = case_when(
+        intersection_count == 0 ~ "No overlap",
+        intersection_count == 1 ~ "Single match",
+        intersection_count >= 2 ~ "Multiple matches"
       )
     ) %>%
-    select(`Intersection Count`, Description, `Points (%)`, `Rectangles (%)`)
+    select(intersection_count, description, pct_cortana, pct_halo)
 }
 
 #' Create bidirectional mapping between points and rectangles
+#' Add number of items in image of the map.
 #' 
 #' @param intersections Result from find_intersections()
 #' @return List with Cortana->Halo and Halo->Cortana mappings
@@ -139,13 +140,17 @@ create_intersection_mapping <- function(intersections) {
   # Cortana points to Halo rectangles
   cortana_halo <- tibble(
     Cortana = seq_along(intersections$points_in_rects),
-    Halo = map(intersections$points_in_rects, list)
+    Nch = intersections$points_in_rects %>%
+      map_vec(length),
+    C2H = intersections$points_in_rects
   )
   
   # Halo rectangles to Cortana points
   halo_cortana <- tibble(
     Halo = seq_along(intersections$rects_with_points),
-    Cortana = map(intersections$rects_with_points, list)
+    Nhc = intersections$rects_with_points %>%
+      map_vec(length),
+    H2C = intersections$rects_with_points
   )
   
   list(
@@ -163,15 +168,18 @@ create_intersection_mapping <- function(intersections) {
 #' @return Data frame with one-to-one matches
 #' @export
 find_one_to_one_matches <- function(mapping) {
-  full_join(mapping$halo_to_cortana, 
-            mapping$cortana_to_halo %>% unnest(Halo), 
-            by = "Halo") %>%
-    filter(!is.na(Cortana.y)) %>%           # Remove unmatched rectangles
-    group_by(Cortana.y) %>%                 # Group by Cortana points
-    filter(n() == 1) %>%                    # Keep points in exactly 1 rectangle
-    group_by(Halo) %>%                      # Group by Halo rectangles  
-    filter(n() == 1) %>%                    # Keep rectangles with exactly 1 point
-    unnest(Cortana.x)                       # Expand the mapping
+  xx=mapping$cortana_to_halo %>%
+    filter(Nch==1) %>%
+    unnest(C2H) %>%
+    left_join(mapping$halo_to_cortana,by=c(C2H="Halo")) %>%
+    filter(Nhc==1) %>%
+    unnest(H2C) %>%
+    rename(Halo=C2H)
+  n_missMatch <- xx %>% filter(Cortana!=H2C) %>% nrow
+  if(n_missMatch>0) {
+    rlang::abort("FATAL ERROR::miss matched h2c<->c2h")
+  }
+  xx %>% select(Cortana,Halo)
 }
 
 # =============================================================================
@@ -189,7 +197,8 @@ find_one_to_one_matches <- function(mapping) {
 analyze_spatial_data <- function(csv_file, rds_pattern) {
   # Step 1: Load and clean data
   cat("Loading cell data from CSV...\n")
-  cell_data <- read_cell_table(csv_file) %>% clean_cell_data()
+  cell_data <- read_cell_table(csv_file) %>%
+  clean_cell_data()
   
   cat("Loading Halo geometry data...\n")
   halo_data <- load_halo_data(rds_pattern)
