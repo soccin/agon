@@ -1,15 +1,22 @@
 argv=commandArgs(trailing=T)
 
-source("R/data_utils.R")
-source("R/plotting_utils.R")
-source("R/spatial_analysis.R")
+if(len(argv)!=1) {
+  cat("
+  usage: Rscript analysis01.R SAMPLE_ID
+     eg: Rscript analysis01.R GBM_043\n\n")
+  quit()
+}
 
-source("R/my_one_to_one_finder.R")
+SDIR=get_script_dir()
+
+source(file.path(SDIR,"R/data_utils.R"))
+source(file.path(SDIR,"R/plotting_utils.R"))
+source(file.path(SDIR,"R/spatial_analysis.R"))
+source(file.path(SDIR,"R/my_one_to_one_finder.R"))
 
 require(patchwork)
 
-i=1
-sample_id=argv[i]
+sample_id=argv[1]
 
 # Validate that sample_id was provided
 if (is.na(sample_id) || length(sample_id) == 0) {
@@ -22,9 +29,9 @@ if (is.na(sample_id) || length(sample_id) == 0) {
 # Validate sample data exists before proceeding
 cat("Loading data for sample:", sample_id, "\n")
 tryCatch({
-  dc0=load_cortana_data(sample_id) %>% filter(!Exclude)
+  dc0=load_cortana_data(sample_id)
   hh=load_halo_data(sample_id)
-  dh0=extract_geom_data(hh) %>% filter(!Exclude)
+  dh0=extract_geom_data(hh)
 }, error = function(e) {
   cat("ERROR: Failed to load data for sample '", sample_id, "':\n", sep="")
   cat(e$message, "\n")
@@ -54,8 +61,8 @@ for(ii in seq(mm)) {
 
   mi=mm[[ii]]
 
-  dc=mi$Cortana
-  dh=mi$Halo
+  dc=mi$Cortana %>% filter(!Exclude)
+  dh=mi$Halo %>% filter(!Exclude)
 
   if(dc$FOV[1]!=dh$FOV[1]) {
     rlang::abort("FATAL ERROR::FOV Mismatch")
@@ -99,9 +106,24 @@ for(ii in seq(mm)) {
 
   aggStats[[fov]]=statsTbl
 
+  if(o2o_stats$pct_cortana<.5 || o2o_stats$pct_halo<.5) {
+    plot_comparisons(mi$Cortana,mi$Halo)
+  }
+
 }
 
 aggStats=aggStats %>% bind_rows
+fs::dir_create("output/stats")
+write_csv(aggStats,cc("output/stats/overlapStats",sample_id,".csv"))
 
-write_csv(aggStats,cc("overlapStats",sample_id,".csv"))
+excStats=dh0 %>%
+  count(FOV,ExcDesc) %>%
+  group_by(FOV) %>%
+  mutate(pct=n/sum(n)) %>%
+  gather(metric,val,n,pct) %>%
+  unite(em,metric,ExcDesc,sep="_") %>%
+  spread(em,val,fill=0) %>%
+  mutate(sample_id=sample_id) %>%
+  select(sample_id,fov=FOV,matches("pct"),matches("n_"))
+write_csv(excStats,cc("output/stats/excStats",sample_id,".csv"))
 
