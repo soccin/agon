@@ -30,8 +30,14 @@ read_cell_table <- function(sample_id) {
          "Expected pattern: *", sample_id, "___cell_table_size_normalized_final.csv ",
          "in directory: ", mesmer_folder)
   }
+
+  if(len(matching_files)>1) {
+    stop("Multiple cell files find mathing sample name",sample_id)
+  }
   
-  read_csv(matching_files[1])
+  cat("Loading cell file",matching_files,"for sample_id",sample_id,"\n")
+
+  read_csv(matching_files)
 }
 
 #' Clean cell data by selecting relevant columns and removing nuclear markers
@@ -116,7 +122,13 @@ load_halo_data <- function(sample_id) {
          "in directory: data/Halo")
   }
   
-  readRDS(rds_file[1])  # Load first matching file
+  if(len(rds_file)>1) {
+    print(str(rds_file))
+    stop("To many matches",len(rds_file),"for sample_id",sample_id)
+  }
+
+  cat("Loading Halo file",rds_file,"\n")
+  readRDS(rds_file)
 }
 
 #' Extract and process geometry data from Halo data object
